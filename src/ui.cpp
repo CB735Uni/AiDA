@@ -141,7 +141,7 @@ void SettingsForm::show_and_apply(aida_plugin_t* plugin_instance)
         providers_qstrvec.push_back(p);
 
     qstring provider_setting = g_settings.api_provider.c_str();
-    provider_setting = ida_utils::qstring_tolower(provider_setting.c_str());
+    provider_setting = ida_utils::QStringToLower(provider_setting.c_str());
     int provider_idx = 0;
     if (provider_setting == "openai") provider_idx = 1;
     else if (provider_setting == "openrouter") provider_idx = 2;
@@ -287,7 +287,7 @@ void show_text_in_viewer(const char* title, const std::string& text_content)
 
     strvec_t* lines_ptr = new strvec_t();
 
-    std::string marked_up_content = ida_utils::markup_text_with_addresses(text_content);
+    std::string marked_up_content = ida_utils::MarkupTextWithAddresses(text_content);
 
     std::stringstream ss(marked_up_content);
     std::string line;

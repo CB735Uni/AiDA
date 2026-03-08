@@ -269,44 +269,44 @@ std::string AIClient::_blocking_generate(const std::string& prompt_text, double 
 
 void AIClient::analyze_function(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea);
+    json context = ida_utils::GetContextForPrompt(ea);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
-    std::string prompt = ida_utils::format_prompt(ANALYZE_FUNCTION_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(ANALYZE_FUNCTION_PROMPT, context);
 
     _generate(prompt, callback, _settings.temperature, "function analysis");
 }
 
 void AIClient::suggest_name(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea);
+    json context = ida_utils::GetContextForPrompt(ea);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
-    std::string prompt = ida_utils::format_prompt(SUGGEST_NAME_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(SUGGEST_NAME_PROMPT, context);
     _generate(prompt, callback, 0.0, "name suggestion");
 }
 
 void AIClient::generate_struct(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea, true);
+    json context = ida_utils::GetContextForPrompt(ea, true);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
-    std::string prompt = ida_utils::format_prompt(GENERATE_STRUCT_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(GENERATE_STRUCT_PROMPT, context);
     _generate(prompt, callback, 0.0, "struct generation");
 }
 
 void AIClient::generate_hook(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea);
+    json context = ida_utils::GetContextForPrompt(ea);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
@@ -321,45 +321,45 @@ void AIClient::generate_hook(ea_t ea, callback_t callback)
 
     context["func_name"] = clean_func_name;
 
-    std::string prompt = ida_utils::format_prompt(GENERATE_HOOK_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(GENERATE_HOOK_PROMPT, context);
     _generate(prompt, callback, 0.0, "hook generation");
 }
 
 void AIClient::generate_comments(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea);
+    json context = ida_utils::GetContextForPrompt(ea);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
-    std::string prompt = ida_utils::format_prompt(GENERATE_COMMENTS_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(GENERATE_COMMENTS_PROMPT, context);
     _generate(prompt, callback, 0.0, "comment generation");
 }
 
 void AIClient::custom_query(ea_t ea, const std::string& question, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea);
+    json context = ida_utils::GetContextForPrompt(ea);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
     context["user_question"] = question;
-    std::string prompt = ida_utils::format_prompt(CUSTOM_QUERY_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(CUSTOM_QUERY_PROMPT, context);
     _generate(prompt, callback, _settings.temperature, "custom query");
 }
 
 void AIClient::locate_global_pointer(ea_t ea, const std::string& target_name, addr_callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea, false, 16000);
+    json context = ida_utils::GetContextForPrompt(ea, false, 16000);
     if (!context["ok"].get<bool>())
     {
         callback(BADADDR);
         return;
     }
     context["target_name"] = target_name;
-    std::string prompt = ida_utils::format_prompt(LOCATE_GLOBAL_POINTER_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(LOCATE_GLOBAL_POINTER_PROMPT, context);
 
     auto on_result = [callback, target_name](const std::string& result) {
         if (!result.empty() && result.find("Error:") == std::string::npos && result.find("None") == std::string::npos)
@@ -389,13 +389,13 @@ void AIClient::locate_global_pointer(ea_t ea, const std::string& target_name, ad
 
 void AIClient::rename_all(ea_t ea, callback_t callback)
 {
-    json context = ida_utils::get_context_for_prompt(ea, true);
+    json context = ida_utils::GetContextForPrompt(ea, true);
     if (!context["ok"].get<bool>())
     {
         callback(context["message"].get<std::string>());
         return;
     }
-    std::string prompt = ida_utils::format_prompt(RENAME_ALL_PROMPT, context);
+    std::string prompt = ida_utils::FormatPrompt(RENAME_ALL_PROMPT, context);
     _generate(prompt, callback, 0.0, "renaming");
 }
 
@@ -832,7 +832,7 @@ std::string CopilotClient::_parse_api_response(const json& jres) const
 
 std::unique_ptr<AIClient> get_ai_client(const settings_t& settings)
 {
-    qstring provider = ida_utils::qstring_tolower(settings.api_provider.c_str());
+    qstring provider = ida_utils::QStringToLower(settings.api_provider.c_str());
 
     msg("AI Assistant: Initializing AI provider: %s\n", provider.c_str());
 

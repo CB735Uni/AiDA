@@ -405,7 +405,7 @@ bool settings_t::load_from_file()
 
 std::string settings_t::get_active_api_key() const
 {
-    qstring provider = ida_utils::qstring_tolower(api_provider.c_str());
+    qstring provider = ida_utils::QStringToLower(api_provider.c_str());
     if (provider == "gemini") return gemini_api_key;
     if (provider == "openai") return openai_api_key;
     if (provider == "openrouter") return openrouter_api_key;
@@ -416,7 +416,7 @@ std::string settings_t::get_active_api_key() const
 
 void settings_t::prompt_for_api_key()
 {
-    qstring provider = ida_utils::qstring_tolower(api_provider.c_str());
+    qstring provider = ida_utils::QStringToLower(api_provider.c_str());
 
     if (provider == "copilot")
     {

@@ -12,9 +12,9 @@ namespace ida_utils
     struct decomp_request_t : public exec_request_t
     {
         std::pair<std::string, std::string> result;
-        get_code_callback_t callback;
+        GetCodeCallbackT callback;
 
-        decomp_request_t(get_code_callback_t cb) : callback(std::move(cb)) {}
+        decomp_request_t(GetCodeCallbackT cb) : callback(std::move(cb)) {}
 
         ssize_t idaapi execute() override
         {
@@ -52,7 +52,7 @@ namespace ida_utils
         return replacement;
     }
 
-    std::string markup_text_with_addresses(const std::string& text)
+    std::string MarkupTextWithAddresses(const std::string& text)
     {
         std::vector<match_info> matches;
 
@@ -93,8 +93,8 @@ namespace ida_utils
                 size_t pos = text.find(s_name, 0);
                 while (pos != std::string::npos)
                 {
-                    bool pre_ok = (pos == 0) || !is_word_char(text[pos - 1]);
-                    bool post_ok = (pos + s_name.length() >= text.length()) || !is_word_char(text[pos + s_name.length()]);
+                    bool pre_ok = (pos == 0) || !IsWordChar(text[pos - 1]);
+                    bool post_ok = (pos + s_name.length() >= text.length()) || !IsWordChar(text[pos + s_name.length()]);
                     if (pre_ok && post_ok)
                     {
                         match_info mi;
@@ -167,7 +167,7 @@ namespace ida_utils
         return s;
     }
 
-    std::pair<std::string, std::string> get_function_code(ea_t ea, size_t max_len, bool force_assembly)
+    std::pair<std::string, std::string> GetFunctionCode(ea_t ea, size_t max_len, bool force_assembly)
     {
         if (max_len == 0)
         {
@@ -218,11 +218,11 @@ namespace ida_utils
         return { truncate_string(ss.str(), max_len), "Assembly" };
     }
 
-    void get_function_code(ea_t ea, get_code_callback_t callback, size_t max_len, bool force_assembly)
+    void GetFunctionCode(ea_t ea, GetCodeCallbackT callback, size_t max_len, bool force_assembly)
     {
         std::thread([ea, max_len, callback, force_assembly]() {
             auto req = new decomp_request_t(callback);
-            req->result = get_function_code(ea, max_len, force_assembly);
+            req->result = GetFunctionCode(ea, max_len, force_assembly);
             execute_sync(*req, MFF_NOWAIT);
         }).detach();
     }
@@ -248,7 +248,7 @@ namespace ida_utils
         if (name.empty())
             name.sprnt("sub_%llx", target_ea);
 
-        auto code_pair = get_function_code(target_ea, settings.xref_code_snippet_lines * 80);
+        auto code_pair = GetFunctionCode(target_ea, settings.xref_code_snippet_lines * 80);
         const char* direction = find_callers ? "Called by" : "Calls";
 
         result.cat_sprnt("// --- %s: %s at 0x%llx (Depth: %d) ---\n",
@@ -293,7 +293,7 @@ namespace ida_utils
         }
     }
 
-    std::string get_code_xrefs_to(ea_t ea, const settings_t& settings)
+    std::string GetCodeXrefsTo(ea_t ea, const settings_t& settings)
     {
         qstring result;
         int count = 0;
@@ -304,7 +304,7 @@ namespace ida_utils
         return result.c_str();
     }
 
-    std::string get_code_xrefs_from(ea_t ea, const settings_t& settings)
+    std::string GetCodeXrefsFrom(ea_t ea, const settings_t& settings)
     {
         qstring result;
         int count = 0;
@@ -315,7 +315,7 @@ namespace ida_utils
         return result.c_str();
     }
 
-    std::string get_struct_usage_context(ea_t ea)
+    std::string GetStructUsageContext(ea_t ea)
     {
         func_t* pfn = get_func(ea);
         if (pfn == nullptr)
@@ -453,7 +453,7 @@ namespace ida_utils
         return output.c_str();
     }
 
-    std::string get_data_xrefs_for_struct(const tinfo_t& struct_tif, const settings_t& settings)
+    std::string GetDataXrefsForStruct(const tinfo_t& struct_tif, const settings_t& settings)
     {
         if (!struct_tif.is_udt())
             return "// Not a valid UDT (struct/union).";
@@ -522,7 +522,7 @@ namespace ida_utils
         return output.c_str();
     }
 
-    nlohmann::json get_context_for_prompt(ea_t ea, bool include_struct_context, size_t max_len)
+    nlohmann::json GetContextForPrompt(ea_t ea, bool include_struct_context, size_t max_len)
     {
         func_t* pfn = get_func(ea);
         if (pfn == nullptr)
@@ -532,7 +532,7 @@ namespace ida_utils
             return { {"ok", false}, {"message", err_msg.c_str()} };
         }
 
-        auto code_pair = get_function_code(ea, max_len);
+        auto code_pair = GetFunctionCode(ea, max_len);
         if (code_pair.second == "Error")
         {
             return { {"ok", false}, {"message", code_pair.first} };
@@ -546,8 +546,8 @@ namespace ida_utils
             {"code", code_pair.first},
             {"language", code_pair.second},
             {"func_ea_hex", ea_hex_str.c_str()},
-            {"xrefs_to", get_code_xrefs_to(ea, g_settings)},
-            {"xrefs_from", get_code_xrefs_from(ea, g_settings)},
+            {"xrefs_to", GetCodeXrefsTo(ea, g_settings)},
+            {"xrefs_from", GetCodeXrefsFrom(ea, g_settings)},
         };
 
         tinfo_t func_tif;
@@ -641,8 +641,8 @@ namespace ida_utils
 
                         if (struct_tif.is_udt())
                         {
-                            std::string usage_context = get_struct_usage_context(ea);
-                            std::string data_xref_context = get_data_xrefs_for_struct(struct_tif, g_settings);
+                            std::string usage_context = GetStructUsageContext(ea);
+                            std::string data_xref_context = GetDataXrefsForStruct(struct_tif, g_settings);
                             context["struct_context"] = usage_context + "\n\n" + data_xref_context;
                         }
                         else
@@ -684,7 +684,7 @@ namespace ida_utils
         return context;
     }
 
-    std::string format_prompt(const char* prompt_template, const nlohmann::json& context)
+    std::string FormatPrompt(const char* prompt_template, const nlohmann::json& context)
     {
         std::string result = prompt_template;
         for (auto const& [key, val] : context.items())
@@ -703,7 +703,7 @@ namespace ida_utils
         return result;
     }
 
-    void apply_struct_from_cpp(const std::string& cpp_code, ea_t ea)
+    void ApplyStructFromCpp(const std::string& cpp_code, ea_t ea)
     {
         std::string struct_code;
         std::smatch match_md;
@@ -879,7 +879,7 @@ namespace ida_utils
             warning("AiDA: An unexpected error occurred during type application: %s", e.what());
         }
     }
-    bool is_word_char(char c)
+    bool IsWordChar(char c)
     {
         return qisalnum(c) || c == '_' || c == ':';
     }
@@ -915,7 +915,7 @@ namespace ida_utils
     const int func_chooser_t::WIDTHS[] = { 30 };
     const char* const func_chooser_t::HEADER[] = { "Function" };
 
-    func_t* get_function_for_item(ea_t ea)
+    func_t* GetFunctionForItem(ea_t ea)
     {
         func_t* pfn = get_func(ea);
         if (pfn != nullptr)
@@ -968,14 +968,14 @@ namespace ida_utils
         return get_func(func_vec[selected_idx]);
     }
     
-    qstring qstring_tolower(const qstring& s)
+    qstring QStringToLower(const qstring& s)
     {
         qstring lower_s = s;
         qstrlwr(lower_s.begin());
         return lower_s;
     }
 
-    bool get_address_from_line_pos(ea_t* out_ea, const char* /*line*/, int /*x*/)
+    bool GetAddressFromLinePos(ea_t* out_ea, const char* /*line*/, int /*x*/)
     {
         TWidget* view = get_current_viewer();
         if (view == nullptr)
@@ -1025,7 +1025,7 @@ namespace ida_utils
     }
 
 #ifdef _WIN32
-    bool set_clipboard_text(const qstring& text)
+    bool SetClipboardText(const qstring& text)
     {
 #ifdef _WIN32
         if (!OpenClipboard(nullptr))
@@ -1101,15 +1101,15 @@ namespace ida_utils
 #endif
     }
 #else
-    bool set_clipboard_text(const qstring& text)
+    bool SetClipboardText(const qstring& text)
     {
         // Placeholder for Linux: clipboard functionality not implemented.
-        warning("AiDA: set_clipboard_text is not implemented for Linux.");
+        warning("AiDA: SetClipboardText is not implemented for Linux.");
         return false;
     }
 #endif
 
-    std::string format_context_for_clipboard(const nlohmann::json& context)
+    std::string FormatContextForClipboard(const nlohmann::json& context)
     {
         std::stringstream ss;
 
@@ -1142,7 +1142,7 @@ namespace ida_utils
         return ss.str();
     }
 
-    qstring apply_renames_from_ai(ea_t func_ea, const std::string& cpp_code)
+    qstring ApplyRenamesFromAi(ea_t func_ea, const std::string& cpp_code)
     {
         if (!init_hexrays_plugin())
         {

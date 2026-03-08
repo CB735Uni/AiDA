@@ -17,7 +17,7 @@ action_state_t idaapi action_handler::update(action_update_ctx_t* ctx)
 
 void handle_analyze_function(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -35,7 +35,7 @@ void handle_analyze_function(action_activation_ctx_t* ctx, aida_plugin_t* plugin
 
 void handle_rename_function(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -99,7 +99,7 @@ void handle_rename_function(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 
 void handle_auto_comment(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -221,7 +221,7 @@ void handle_auto_comment(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 
 void handle_generate_struct(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -229,7 +229,7 @@ void handle_generate_struct(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
     auto on_complete = [func_ea](const std::string& struct_cpp) {
         action_helpers::handle_ai_response(struct_cpp, "Generated Struct",
             [func_ea](const std::string& content) {
-                ida_utils::apply_struct_from_cpp(content, func_ea);
+                ida_utils::ApplyStructFromCpp(content, func_ea);
             });
     };
     plugin->ai_client->generate_struct(func_ea, on_complete);
@@ -237,7 +237,7 @@ void handle_generate_struct(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 
 void handle_generate_hook(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -257,7 +257,7 @@ void handle_generate_hook(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 
 void handle_custom_query(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -279,12 +279,12 @@ void handle_custom_query(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 
 void handle_copy_context(action_activation_ctx_t* ctx, aida_plugin_t* /*plugin*/)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
 
-    nlohmann::json context = ida_utils::get_context_for_prompt(func_ea, true);
+    nlohmann::json context = ida_utils::GetContextForPrompt(func_ea, true);
     
     if (!context.value("ok", false))
     {
@@ -292,9 +292,9 @@ void handle_copy_context(action_activation_ctx_t* ctx, aida_plugin_t* /*plugin*/
         return;
     }
 
-    std::string clipboard_text = ida_utils::format_context_for_clipboard(context);
+    std::string clipboard_text = ida_utils::FormatContextForClipboard(context);
 
-    if (ida_utils::set_clipboard_text(clipboard_text.c_str()))
+    if (ida_utils::SetClipboardText(clipboard_text.c_str()))
     {
         qstring func_name;
         get_func_name(&func_name, func_ea);
@@ -308,7 +308,7 @@ void handle_copy_context(action_activation_ctx_t* ctx, aida_plugin_t* /*plugin*/
 
 void handle_rename_all(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
 {
-    func_t* pfn = ida_utils::get_function_for_item(ctx->cur_ea);
+    func_t* pfn = ida_utils::GetFunctionForItem(ctx->cur_ea);
     if (pfn == nullptr)
         return;
     const ea_t func_ea = pfn->start_ea;
@@ -316,7 +316,7 @@ void handle_rename_all(action_activation_ctx_t* ctx, aida_plugin_t* plugin)
     auto on_complete = [func_ea](const std::string& rename_suggestions) {
         action_helpers::handle_ai_response(rename_suggestions, "Rename Suggestions",
             [func_ea](const std::string& content) {
-                qstring summary = ida_utils::apply_renames_from_ai(func_ea, content);
+                qstring summary = ida_utils::ApplyRenamesFromAi(func_ea, content);
                 if (summary.empty())
                 {
                     msg("AiDA: No valid renames suggested by AI or nothing to rename.\n");
